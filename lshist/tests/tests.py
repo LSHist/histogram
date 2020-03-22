@@ -27,7 +27,7 @@ class EvaluatorTest(unittest.TestCase):
         self.parser = Parser()
 
         # Define high level elements
-        high_level_elements = {"E1": {"e1", "e2"}}
+        high_level_elements = {"E1": {"e1", "e2", "e3"}, "E2": {"e2", "e3", "e4"}}
 
         # Initialize Evaluator
         self.evaluator = Evaluator(operations, self.hist, high_level_elements=high_level_elements)
@@ -53,14 +53,14 @@ class EvaluatorTest(unittest.TestCase):
 
     def test_evaluate_Or__low_level_elements(self):
         """Evaluation of expression with low level elements and OR operation"""
-        E1 = E("e1+e2")     # compound elements
-        E2 = E("e3")        # single element
+        E1 = E("e1+e2+e3")     # compound elements
+        E2 = E("e2+e3+e4")     # single element
 
         expression = self.parser.parse_string(E1.Or(E2).value)  # parse the expression
         HE_result = self.evaluator.eval(expression)             # evaluate the expression
 
-        self.assertDictEqual({"e1": 0.4, "e2": 0.1, "e3": 0.3}, HE_result.to_dict())
-        self.assertAlmostEqual(0.8, HE_result.sum(), 2)
+        self.assertDictEqual({"e1": 0.4, "e2": 0.1, "e3": 0.3, "e4": 0.1}, HE_result.to_dict())
+        self.assertAlmostEqual(0.9, HE_result.sum(), 2)
 
     def test_evaluate_Or__high_level_elements(self):
         """Evaluation of expression with high level element and OR operation"""
@@ -73,6 +73,29 @@ class EvaluatorTest(unittest.TestCase):
 
         self.assertDictEqual({"e1": 0.4, "e2": 0.1, "e3": 0.3}, HE_result.to_dict())
         self.assertAlmostEqual(0.8, HE_result.sum(), 2)
+
+    def test_evaluate_AndOr__low_level_elements(self):
+        """Evaluation of expression with low level elements and OR operation"""
+        E1 = E("e1+e2+e3")     # compound elements
+        E2 = E("e2+e3+e4")     # single element
+
+        expression = self.parser.parse_string((E1 + E2).value)  # parse the expression
+        HE_result = self.evaluator.eval(expression)             # evaluate the expression
+
+        self.assertDictEqual({"e1": 0.4, "e2": 0.1, "e3": 0.3, "e4": 0.1}, HE_result.to_dict())
+        self.assertAlmostEqual(0.9, HE_result.sum(), 2)
+
+    def test_evaluate_AndOr__high_level_elements(self):
+        """Evaluation of expression with high level element and OR operation"""
+
+        E1 = E("E1")    # high level element
+        E2 = E("E2")    # high level element
+
+        expression = self.parser.parse_string((E1 + E2).value)  # parse the expression
+        HE_result = self.evaluator.eval(expression)             # evaluate the expression
+
+        self.assertDictEqual({"e1": 0.4, "e2": 0.1, "e3": 0.3, "e4": 0.1}, HE_result.to_dict())
+        self.assertAlmostEqual(0.9, HE_result.sum(), 2)
 
 
 class Evaluator1DTest(unittest.TestCase):
@@ -154,6 +177,45 @@ class Evaluator1DTest(unittest.TestCase):
         self.assertDictEqual({("ep1", "e1"): 0.2, ("ep1", "e2"): 0.1, ("ep2", "e2"): 0.2, ("ep3", "e4"): 0.1},
                              HE_result.to_dict())
         self.assertAlmostEqual(0.6, HE_result.sum(), 2)
+
+
+class HistogramTest(unittest.TestCase):
+
+    def test_Union(self):
+
+        data_1 = ["e1", "e1", "e2", "e3", "e5", "e3", "e1", "e3", "e1", "e4"]
+        data_2 = ["e1", "e2", "e3", "e4", "e6"]
+
+        hist_1 = Histogram(data_1, normalized=False)
+        hist_2 = Histogram(data_2, normalized=False)
+
+        hist = hist_1 + hist_2
+
+        # hist.normalize()
+
+        self.assertDictEqual({"e1": 5.0, "e2": 2.0, "e3": 4.0, "e4": 2.0, "e5": 1.0, "e6": 1.0}, hist.to_dict())
+        self.assertAlmostEqual(15.0, hist.sum(), 2)
+
+    def test_Union_normalized(self):
+        pass
+
+    def test_Intersection(self):
+
+        data_1 = ["e1", "e1", "e2", "e3", "e5", "e3", "e1", "e3", "e1", "e4"]
+        data_2 = ["e1", "e2", "e3", "e4", "e6"]
+
+        hist_1 = Histogram(data_1, normalized=False)
+        hist_2 = Histogram(data_2, normalized=False)
+
+        hist = hist_1 * hist_2
+
+        # hist.normalize()
+
+        self.assertDictEqual({"e1": 1.0, "e2": 1.0, "e3": 1.0, "e4": 1.0}, hist.to_dict())
+        self.assertAlmostEqual(4.0, hist.sum(), 2)
+
+    def test_Intersection_normalized(self):
+        pass
 
 
 if __name__ == "__main__":

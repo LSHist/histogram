@@ -9,7 +9,7 @@ class E:
     def Union(self, other):
         return self._compose(other.value, "+")
 
-    def Intercept(self, other):
+    def Intersection(self, other):
         return self._compose(other.value, "*")
 
     def Sub(self, other):
@@ -37,7 +37,7 @@ class E:
         return self.Union(other)
 
     def __mul__(self, other):
-        return self.Intercept(other)
+        return self.Intersection(other)
 
     def __sub__(self, other):
         return self.Sub(other)

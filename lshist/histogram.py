@@ -183,6 +183,14 @@ class Histogram:
             return self._HE
         raise Exception("There are no elements.")
 
+    def add(self, element):
+
+        if isinstance(element, HElement):
+            if element.key not in self._HE:
+                self._HE[element.key] = HElement(element.key, 0)
+            self._HE[element.key].value += element.value
+            self._size += element.value
+
     def to_dict(self):
         """Dictionary of non-zero histogram elements: {id:value}"""
         if hasattr(self, "_HE") and isinstance(self._HE, dict):
@@ -229,7 +237,16 @@ class Histogram:
         return item in self._HE
 
     def __len__(self):
-        return self._size
+        return hasattr(self, "_HE") and len(self._HE)
+
+    def __add__(self, other):
+        return hist_operations["+"].compute(self, other)
+
+    def __mul__(self, other):
+        return hist_operations["*"].compute(self, other)
+
+    def __iter__(self):
+        return self._HE.items().__iter__()
 
     @staticmethod
     def transform(data):
@@ -256,9 +273,6 @@ class Histogram:
 
 class Histogram1D(Histogram):
     """Data Histogram with 1D positioning"""
-
-    # def __init__(self, data, normalized=True, size=None, transform_func=None):
-    #     super().__init__(data, normalized, size, transform_func)
 
     def __call__(self, element, composition=None):
         """
@@ -322,12 +336,41 @@ Operations over Histogram
 """
 
 
-class HistUnion:
-    pass
+class HistUnion(OperationBase):
+
+    sign = "+"
+    description = ""
+
+    def compute(self, arg1, arg2):
+        opn1, opn2 = (arg2, arg1) if len(arg1) > len(arg2) else (arg1, arg2)
+        hist = Histogram(data=None)
+        for key, value in opn2:
+            hist[key] = HElement(key, value.value)
+        for key, value in opn1:
+            if key not in hist:
+                hist[key] = HElement(key, 0)
+            hist[key].value += value.value
+        return hist
 
 
 class HistIntersection:
-    pass
+
+    sign = "*"
+    description = ""
+
+    def compute(self, arg1, arg2):
+        opn1, opn2 = (arg2, arg1) if len(arg1) > len(arg2) else (arg1, arg2)
+        hist = Histogram(data=None)
+        for key, value in opn1:
+            if key in opn2:
+                hist[key] = HElement(key, min(value.value, opn2[key].value))
+        return hist
+
+
+hist_operations = {
+    HistUnion.sign: HistUnion(),
+    HistIntersection.sign: HistIntersection()
+}
 
 
 """
