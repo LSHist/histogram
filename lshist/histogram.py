@@ -152,6 +152,10 @@ class Histogram:
 
     def __init__(self, data, normalized=True, size=None, transform_func=None):
 
+        if not data:
+            self._HE = dict()
+            return
+
         if transform_func:
             self._HE = transform_func(data)
         else:
@@ -185,6 +189,11 @@ class Histogram:
             return {key: value.value for key, value in self._HE.items()}
         raise Exception("There are no elements.")
 
+    def normalize(self, size=None):
+        if size:
+            self._size = size
+        self._normalize()
+
     def _normalize(self):
         """Normalize data histogram to 1"""
         for key in self._HE:
@@ -206,8 +215,8 @@ class Histogram:
         """
         if element in self:
             return HElementSet(HE={self[element]})
-        elif element and composition and isinstance(composition, set):
-            return HElementSet(HE={self[el] for el in composition if el in self})
+        elif element and composition and element in composition and isinstance(composition[element], set):
+            return HElementSet(HE={self[el] for el in composition[element] if el in self})
         return HElementSet()
 
     def __setitem__(self, key, value):
@@ -243,6 +252,56 @@ class Histogram:
                     histogram[el] = HElement(el, 0.0)
                 histogram[el].value += 1.0
         return histogram
+
+
+class Histogram1D(Histogram):
+    """Data Histogram with 1D positioning"""
+
+    # def __init__(self, data, normalized=True, size=None, transform_func=None):
+    #     super().__init__(data, normalized, size, transform_func)
+
+    def __call__(self, element, composition=None):
+        """
+        Create a histogram of elements
+
+        Parameters
+        ----------
+        element         a low- or high-level element
+        composition     used for a high-level element to define a set of low-level elements
+
+        Returns
+        -------
+        histogram of elements (HE) -> HElementSet
+
+        """
+
+        # element
+
+        element_dim = len(element)
+        Es = dict()
+        has_compound = False
+
+        for i in range(element_dim):
+            Es[i] = {element[i]}
+            if composition is not None and i in composition and element[i] in composition[i]:
+                Es[i] = composition[i][element[i]]
+                has_compound = True
+
+        if not has_compound and element in self:
+            return HElementSet(HE={self[element]})
+        else:
+            condition = lambda x: all([x[i] in Es[i] or "all" in Es[i] for i in range(element_dim)])
+            return HElementSet(HE=set(el for el in self._HE.values() if condition(el.key)))
+
+
+class Histogram2D(Histogram):
+    """Data Histogram with 2D positioning"""
+    pass
+
+
+class Histogram3D(Histogram):
+    """Data Histogram with 3D positioning"""
+    pass
 
 
 class OperationBase:
@@ -360,4 +419,3 @@ operations = {
     SetSubtraction.sign: SetSubtraction(),
     SetXSubtraction.sign: SetXSubtraction()
 }
-

@@ -34,7 +34,7 @@ class E:
             return E(self.value + op + other)
 
     def __add__(self, other):
-        return self.And(other)
+        return self.Union(other)
 
     def __mul__(self, other):
         return self.Intercept(other)

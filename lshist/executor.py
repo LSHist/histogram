@@ -9,8 +9,11 @@ from pyparsing import (
     alphas,
     alphanums,
     Suppress,
-    oneOf
-)
+    oneOf,
+    delimitedList, ParseResults)
+
+from lshist import operations, Histogram
+from lshist.histogram import Histogram1D, Histogram2D
 
 
 class Parser:
@@ -19,11 +22,11 @@ class Parser:
         self._expr = parser_definition or self._create_parser()
 
     def parse_string(self, expression, output_type="postfix"):
+        if hasattr(self, "_postfix") and isinstance(self._postfix, list):
+            self._postfix[:] = []
+        else:
+            self._postfix = []
         if output_type == "postfix":
-            if hasattr(self, "_postfix") and isinstance(self._postfix, list):
-                self._postfix[:] = []
-            else:
-                self._postfix = []
             self._expr.parseString(expression)
             return self._postfix
         elif output_type == "infix":
@@ -33,6 +36,9 @@ class Parser:
         pass
 
     def _create_parser(self):
+
+        # https://sourceforge.net/p/pyparsing/bugs/107/
+
         """
         Parser
         ------
@@ -41,18 +47,27 @@ class Parser:
         term    :: element | '(' expr ')'
         expr    :: term [ op term ]*
         """
-        element = Word("+-" + alphas, alphanums)
-        op = oneOf("+ - * / & | #| #/")
         lpar, rpar = map(Suppress, "()")
+        element = Word("+-" + alphas, alphanums)
+        complex_element = Group(lpar + delimitedList(element) + rpar)
+        op = oneOf("+ - * / & | #| #/")
         expr = Forward()
-        term = (op[...] + (element.setParseAction(self._push_first) | Group(lpar + expr + rpar)))\
+        term = (op[...] + (element.setParseAction(self._push_first) | complex_element.setParseAction(self._push_first) | Group(lpar + expr + rpar)))\
             .setParseAction(self._push_unary_minus)
         expr <<= term + (op + term).setParseAction(self._push_first)[...]
         return expr
 
     def _push_first(self, tokens):
         """Postfix notation for binary operations"""
-        self._postfix.append(tokens[0])
+        if isinstance(tokens[0], ParseResults):
+            if len(tokens[0]) == 1:
+                self._postfix.pop()
+                self._postfix.append(tokens[0][0])
+            else:
+                [self._postfix.pop() for _ in range(len(tokens[0]))]
+                self._postfix.append(tuple(tokens[0]))
+        else:
+            self._postfix.append(tokens[0])
 
     def _push_unary_minus(self, tokens):
         """Postfix notation for unary operations"""
@@ -77,8 +92,10 @@ class Evaluator:
         else:
             expr = expression
 
+        hist = data_histogram if data_histogram is not None else self._H
+
         if input_type == "postfix":
-            return self._postfix_evaluate(expr, data_histogram if data_histogram else self._H)
+            return self._postfix_evaluate(expr, hist)
         else:
             raise NotImplemented("Not implemented yet.")
 
@@ -86,8 +103,8 @@ class Evaluator:
 
         op, num_args = expression.pop(), 0
 
-        if isinstance(op, tuple):
-            op, num_args = op
+        # if isinstance(op, tuple):
+        #     op, num_args = op
         if op == "unary -":
             return -self._postfix_evaluate(expression, histogram)
         if op in self._O.keys():
@@ -95,6 +112,68 @@ class Evaluator:
             op1 = self._postfix_evaluate(expression, histogram)
             return self._O[op](op1, op2)
         else:
-            if op in self._extendedE:
-                return histogram(op, self._extendedE[op])
-            return histogram(op)
+            # if op in self._extendedE:
+            #     return histogram(op, self._extendedE[op])
+            return histogram(op, self._extendedE)
+
+
+class HistogramModel:
+
+    def __init__(self, U=None, positioning=False, U_positions=None):
+
+        self.U = U
+        self.positioning = positioning
+        self.U_positions = U_positions
+        self.evaluator = None
+        self.parser = None
+        self.operations = operations
+
+    def execute(self, query, histogram):
+
+        if not hasattr(self, "parser") or not self.parser:
+            self.parser = Parser()
+
+        if not hasattr(self, "evaluator") or not self.evaluator:
+            self.evaluator = Evaluator(operations)
+
+        query_array = self.parser.parse_string(query)
+        return self.evaluator.eval(query_array, histogram)
+
+    def transform(self, data):
+
+        if not data:
+            raise Exception("No data to transform.")
+
+        # if not hasattr(self, "U") or not self.U:
+        #     raise Exception("There are no elements to transform the data.")
+        #
+        # if self.positioning and (not hasattr(self, "U_positions") or not self.U_positions):
+        #     raise Exception("There are no position elements to transform the data.")
+
+        if self.positioning is None:
+            return self._transform2histogram(data)
+        elif self.positioning == "1d":
+            return self._transform2histogram1D(data)
+        elif self.positioning == "2d":
+            return self._transform2histogram2D(data)
+        else:
+            raise Exception("Wrong positioning argument.")
+
+    def _transform2histogram(self, data):
+        return Histogram(data)
+
+    def _transform2histogram1D(self, data):
+
+        if not isinstance(data, (list, tuple)) or not isinstance(data[0], (list, tuple)) or \
+                len(data[0]) <= 1:  # TODO: add support np.ndarray
+            raise Exception("Wrong data format.")
+
+        return Histogram1D(data)
+
+    def _transform2histogram2D(self, data):
+
+        if not isinstance(data, (list, tuple)) or not isinstance(data[0], (list, tuple)) or \
+                len(data[0]) <= 1:  # TODO: add support np.ndarray
+            raise Exception("Wrong data format.")
+
+        return Histogram2D(data)
