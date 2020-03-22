@@ -37,8 +37,6 @@ class Parser:
 
     def _create_parser(self):
 
-        # https://sourceforge.net/p/pyparsing/bugs/107/
-
         """
         Parser
         ------
@@ -49,25 +47,32 @@ class Parser:
         """
         lpar, rpar = map(Suppress, "()")
         element = Word("+-" + alphas, alphanums)
-        complex_element = Group(lpar + delimitedList(element) + rpar)
         op = oneOf("+ - * / & | #| #/")
         expr = Forward()
-        term = (op[...] + (element.setParseAction(self._push_first) | complex_element.setParseAction(self._push_first) | Group(lpar + expr + rpar)))\
+        complex_element = element | Group(lpar + delimitedList(element) + rpar)
+        term = (op[...] + (complex_element.setParseAction(self._push_complex_element)
+                           | Group(lpar + expr + rpar)))\
             .setParseAction(self._push_unary_minus)
         expr <<= term + (op + term).setParseAction(self._push_first)[...]
         return expr
 
-    def _push_first(self, tokens):
+    def _push_complex_element(self, tokens):
         """Postfix notation for binary operations"""
         if isinstance(tokens[0], ParseResults):
             if len(tokens[0]) == 1:
-                self._postfix.pop()
                 self._postfix.append(tokens[0][0])
             else:
-                [self._postfix.pop() for _ in range(len(tokens[0]))]
                 self._postfix.append(tuple(tokens[0]))
         else:
             self._postfix.append(tokens[0])
+
+    def _push_element(self, tokens):
+        """Postfix notation for binary operations"""
+        self._postfix.append(tokens[0])
+
+    def _push_first(self, tokens):
+        """Postfix notation for binary operations"""
+        self._postfix.append(tokens[0])
 
     def _push_unary_minus(self, tokens):
         """Postfix notation for unary operations"""
@@ -103,8 +108,6 @@ class Evaluator:
 
         op, num_args = expression.pop(), 0
 
-        # if isinstance(op, tuple):
-        #     op, num_args = op
         if op == "unary -":
             return -self._postfix_evaluate(expression, histogram)
         if op in self._O.keys():
@@ -112,8 +115,6 @@ class Evaluator:
             op1 = self._postfix_evaluate(expression, histogram)
             return self._O[op](op1, op2)
         else:
-            # if op in self._extendedE:
-            #     return histogram(op, self._extendedE[op])
             return histogram(op, self._extendedE)
 
 
