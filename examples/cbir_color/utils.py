@@ -15,8 +15,6 @@ def load_hist_elements_from_images(files):
     def extract_color(file):
         try:
             im = Image.open(file).convert()
-
-
             pix = im.load()
             return pix[1, 1]
         except:
