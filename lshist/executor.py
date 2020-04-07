@@ -21,19 +21,20 @@ class Parser:
     def __init__(self, parser_definition=None):
         self._expr = parser_definition or self._create_parser()
 
-    def parse_string(self, expression, output_type="postfix"):
+    def parse_string(self, expression, output_type="postfix", copy_expression=True):
         if hasattr(self, "_postfix") and isinstance(self._postfix, list):
             self._postfix[:] = []
         else:
             self._postfix = []
         if output_type == "postfix":
             self._expr.parseString(expression)
-            return self._postfix
+            return self._postfix.copy() if copy_expression is True else self._postfix
         elif output_type == "infix":
-            return self._expr.parseString(expression)
+            return self._expr.parseString(expression).copy() if copy_expression is True \
+                else self._expr.parseString(expression)
 
-    def parse_list(self, element_list):
-        pass
+    def parse_set(self, element_list, sep="+"):
+        return set(element_list.strip(" ()").split(sep))
 
     def _create_parser(self):
 
@@ -46,7 +47,7 @@ class Parser:
         expr    :: term [ op term ]*
         """
         lpar, rpar = map(Suppress, "()")
-        element = Word("+-" + alphas, alphanums)
+        element = Word("+-" + alphas, alphanums + "_")
         op = oneOf("+ - * / & | #| #/")
         expr = Forward()
         complex_element = element | Group(lpar + delimitedList(element) + rpar)
@@ -65,10 +66,6 @@ class Parser:
                 self._postfix.append(tuple(tokens[0]))
         else:
             self._postfix.append(tokens[0])
-
-    def _push_element(self, tokens):
-        """Postfix notation for binary operations"""
-        self._postfix.append(tokens[0])
 
     def _push_first(self, tokens):
         """Postfix notation for binary operations"""
