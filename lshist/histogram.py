@@ -411,9 +411,6 @@ class SetXSubtraction(OperationBase):
     description = ""
 
     def compute(self, arg1, arg2):
-
-        print(arg2.sum())
-
         return HElementSet() if arg2.sum() > 0 else arg1
 
 
