@@ -161,9 +161,10 @@ class Histogram:
         else:
             self._HE = Histogram.transform(data)
         self._size = size or sum(el.value for el in self._HE.values())
-
+        self._normalized = False
         if normalized:
             self._normalize()
+            self._normalized = True
 
     def sum(self):
         if not hasattr(self, "_HE") or not isinstance(self._HE, dict):
@@ -206,6 +207,7 @@ class Histogram:
         """Normalize data histogram to 1"""
         for key in self._HE:
             self._HE[key].value = float(self._HE[key].value) / self._size
+        self._normalized = True
 
     def __call__(self, element, composition=None):
         """
