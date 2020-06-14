@@ -3,8 +3,8 @@ from lshist.histogram import Histogram, HElementSet
 
 class E:
 
-    def __init__(self, expression):
-        self.value = "(" + expression + ")"
+    def __init__(self, *expression):
+        self.value = "(" + ",".join(expression) + ")"
 
     def Union(self, other):
         return self._compose(other.value, "+")
