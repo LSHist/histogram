@@ -1,4 +1,5 @@
 .idea
+*.pyc
 *_checkpoints
 /examples/objects/datasets
 debug
