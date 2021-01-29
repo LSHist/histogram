@@ -2,4 +2,4 @@
 *.pyc
 *_checkpoints
 /examples/objects/datasets
-debug
+debug*
