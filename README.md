@@ -6,6 +6,7 @@ Documentation:
 
 - [Introduction To Histogram Model](https://htmlpreview.github.io/?https://github.com/LSHist/histogram/blob/master/docs/hm_basics.html)
 - [Multidimensional Histogram Model](https://htmlpreview.github.io/?https://github.com/LSHist/histogram/blob/master/docs/hm_multidim.html)
+- [Inverted Indexing in Histogram Model]((https://htmlpreview.github.io/?https://github.com/LSHist/histogram/blob/master/docs/hm_indexing.html))
 
 Examples:
 - Histogram Model: Color Feature ([jupyter](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/features/color_feature.ipynb) | [html](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/features/color_feature.html))
