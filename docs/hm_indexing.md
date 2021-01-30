@@ -370,6 +370,8 @@ Additional operations:
 
 $$Green \land_{1} YGreen = \{d_1, d_2, d_3, d_4, d_5\} \cap \{d_2, d_3, d_4, d_5 \} = \{ d_2, d_3, d_4, d_5\},$$
 $$Green \land_{2} YGreen = \{d_1, d_2, d_3, d_4, d_5 \} \cap \{d_2, d_3, d_4, d_5 \} = \{ d_2, d_3, d_4, d_5 \},$$
+$$Green \dot \lor_1 YGreen \to \{d_1, d_2, d_3, d_4, d_5\} \cup \{d_2, d_3, d_4, d_5\} = \{d_1, d_2, d_3, d_4, d_5\},$$
+$$Green \dot \lor_2 YGreen \to \{d_1, d_2, d_3, d_4, d_5\} \cup \{d_2, d_3, d_4, d_5\} = \{d_1, d_2, d_3, d_4, d_5\},$$
 $$  Green \dot \lor_3 YGreen \to \{ d_1, d_2, d_3, d_4, d_5 \} \setminus \{d_2, d_3, d_4, d_5 \} \cup \{d_2, d_3, d_4, d_5 \} \setminus \{ d_1, d_2, d_3, d_4, d_5 \} = \{ d_1 \} $$
 
 <br>
