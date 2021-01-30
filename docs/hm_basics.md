@@ -133,7 +133,7 @@ Simple example of the universal set, a data instance and its histogram can be fo
 
 <br>
 
-Let's denote a subset of $U$ as $X$. If $U$ is a finite set, then the set of all subsets of $U$, or the $\sigma$-algebra over $U$, is defines as follows
+Let's denote a subset of $U$ as $X$. If $U$ is a finite set, then the set of all subsets of $U$, or the $\sigma$-algebra over $U$, is defined as follows
 
 $$ E^G=\left\{X\vert X \subseteq U\right\}. $$
 
@@ -502,7 +502,17 @@ For non-overlapping elements, operations "$\dot\lor$" and "$\dot\lor_{1}$" lead 
 
 <br>
 
-To get better idea about difference between various of definitions of AND and Exclusive OR, turn to `Figure 6` and `Figure 7`, respectively.
+To get better idea about difference between various of definitions of AND and Exclusive OR, turn to `Figure 7` and `Figure 8`, respectively.
+
+<br>
+
+<div style="text-align:center">
+    <img src="img/hm_basics__AND_OR__universal_set.png" /><br>
+    <i>Figure 6. High-level elements for comparison AND and Exclusive OR</i>
+</div>
+
+<br>
+
 
 <br>
 
