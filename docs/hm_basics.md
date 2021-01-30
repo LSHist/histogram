@@ -549,7 +549,7 @@ To get better idea about difference between various of definitions of AND and Ex
     </tr>
 </table>
 <div style="text-align:center">
-    <i>Figure 6. Comparison of different types of the AND operation</i>
+    <i>Figure 7. Comparison of different types of the AND operation</i>
 </div>
 
 <br>
@@ -600,7 +600,7 @@ TODO: Leave some comments about difference of use of AND
     </tr>
 </table>
 <div style="text-align:center">
-    <i>Figure 7. Comparison of different types of the Exclusive OR operation</i>
+    <i>Figure 8. Comparison of different types of the Exclusive OR operation</i>
 </div>
 
 <br>
