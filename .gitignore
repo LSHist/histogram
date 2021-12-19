@@ -1,5 +1,8 @@
 .idea
-*.pyc
+dist/
+__pycache__/
+*.egg-info/
+*.egg
 *_checkpoints
 /examples/objects/datasets
 debug*
