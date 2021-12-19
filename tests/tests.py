@@ -1,4 +1,5 @@
 import unittest
+
 from lshist.histogram import Histogram, HElementSet, operations
 from lshist.utils import E
 from lshist.executor import Parser, Evaluator, HistogramModel

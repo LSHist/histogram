@@ -1,4 +1,4 @@
-from lshist.histogram import Histogram, HElementSet
+from .histogram import Histogram, HElementSet
 
 
 class E:

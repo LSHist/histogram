@@ -10,10 +10,15 @@ from pyparsing import (
     alphanums,
     Suppress,
     oneOf,
-    delimitedList, ParseResults)
+    delimitedList, ParseResults
+)
 
-from lshist import operations, Histogram
-from lshist.histogram import Histogram1D, Histogram2D
+from .histogram import (
+    operations,
+    Histogram,
+    Histogram1D,
+    Histogram2D
+)
 
 
 class Parser:
