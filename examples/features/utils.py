@@ -9,8 +9,8 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 from plotly.subplots import make_subplots
 
 sys.path.insert(0, "../../")
-from lshist.histogram import Histogram, HElementSet, Histogram1D, HElement
-from lshist.utils import E
+from histogram.histogram import Histogram, HElementSet, Histogram1D, HElement
+from histogram.utils import E
 
 
 def load_hist_elements_from_images(files):

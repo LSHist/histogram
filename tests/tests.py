@@ -1,8 +1,8 @@
 import unittest
 
-from lshist.histogram import Histogram, HElementSet, operations
-from lshist.utils import E
-from lshist.executor import Parser, Evaluator, HistogramModel
+from histogram.histogram import Histogram, HElementSet, operations
+from histogram.utils import E
+from histogram.executor import Parser, Evaluator, HistogramModel
 
 
 class ParserTest(unittest.TestCase):
