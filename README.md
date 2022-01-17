@@ -2,7 +2,7 @@
 
 Histogram model, or *Logic-Set Histogram* - *`LSHist`*
 
-## Documentation
+## Theory
 
 - [Introduction To Histogram Model](https://htmlpreview.github.io/?https://github.com/LSHist/histogram/blob/master/docs/hm_basics.html)
 - [Multidimensional Histogram Model](https://htmlpreview.github.io/?https://github.com/LSHist/histogram/blob/master/docs/hm_multidim.html)
