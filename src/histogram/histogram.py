@@ -292,21 +292,30 @@ class Histogram1D(Histogram):
         """
 
         # element
+        element_ndim = len(element) if isinstance(element, tuple) else 1
 
-        element_dim = len(element)
         Es = dict()
         has_compound = False
-
-        for i in range(element_dim):
-            Es[i] = {element[i]}
-            if composition is not None and i in composition and element[i] in composition[i]:
-                Es[i] = composition[i][element[i]]
+        if element_ndim == 1:
+            Es = {element}
+            if composition is not None and element in composition:
+                Es = composition[element]
                 has_compound = True
+        elif element_ndim > 1:
+            for i in range(element_ndim):
+                Es[i] = {element[i]}
+                if composition is not None and i in composition and element[i] in composition[i]:
+                    Es[i] = composition[i][element[i]]
+                    has_compound = True
 
         if not has_compound and element in self:
             return HElementSet(HE={self[element]})
         else:
-            condition = lambda x: all([x[i] in Es[i] or "all" in Es[i] for i in range(element_dim)])
+            condition = None
+            if element_ndim == 1:
+                condition = lambda x: x in Es or "any" in Es
+            elif element_ndim > 1:
+                condition = lambda x: all([x[i] in Es[i] or "any" in Es[i] for i in range(element_ndim)])
             return HElementSet(HE=set(el for el in self._HE.values() if condition(el.key)))
 
 
