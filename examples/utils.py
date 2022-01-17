@@ -5,8 +5,8 @@ import numpy as np
 import itertools
 from pycocotools.coco import COCO
 
-from histogram.executor import Parser, Evaluator
-from histogram.histogram import Histogram1D, HElement
+from himpy.executor import Parser, Evaluator
+from himpy.histogram import Histogram, Histogram1D, HElement, HElementSet
 
 
 def fetch_coco(path="datasets/coco"):
@@ -114,7 +114,7 @@ def load_coco_histograms(
         #         merged_image = feature_merger.fit_transform((position_image, object_image))
         #         hist = utils.create_histogram_(merged_image)
 
-        # Option 2 (faster)
+        # Option 2
         hist = create_histogram((position_image, object_image))
         hists.append((img_id, hist))
         print("\rCurrent image index: {}/{}".format(indx + 1, limit), end="")
@@ -133,6 +133,7 @@ def load_coco_histograms(
     return hists
 
 
+# TODO: Move to utils module
 class SearchEngine:
 
     def __init__(self, hists, parser: Parser, evaluator: Evaluator):
@@ -141,11 +142,24 @@ class SearchEngine:
         self._evaluator = evaluator
 
     def retrieve(self, query, topN=10, lastN=None, threshold=0.001):
-        expr = self._parser.parse_string(query.value)
-        HEs = [(img_id, self._evaluator.eval(expr, hist)) for img_id, hist in self._hists]
-        img_rank = sorted([(img_id, HE.sum()) for img_id, HE in HEs if HE.sum() > threshold], key=lambda x: -x[1])
+        img_rank = list()
+        if hasattr(query, "value") and isinstance(query.value, str):
+            """Searching by expression"""
+            expr = self._parser.parse_string(query.value)
+            HEs = [(img_id, self._evaluator.eval(expr, hist)) for img_id, hist in self._hists]
+            img_rank = sorted(
+                [(img_id, HE.sum()) for img_id, HE in HEs if HE.sum() > threshold],
+                key=lambda x: -x[1]
+            )
+        elif isinstance(query, Histogram):
+            """Searching by data histogram"""
+            img_rank = sorted(
+                [(image_id, (query * hist).sum()) for image_id, hist in self._hists],
+                key=lambda x: -x[1]
+            )
         if isinstance(lastN, int):
             return img_rank[:topN], img_rank[-lastN:]
+
         return img_rank[:topN]
 
 
@@ -162,61 +176,83 @@ class SearchEngine:
 #     return hist
 
 
+# TODO: Combine create_histogram and create_histogram_
 def create_histogram(features, normalize=True):
     """
     Faster than create_histogram_
     """
+    features_ = None
+    ndim_features = len(features)
     features_flatten = tuple([item.reshape(-1) for item in features])
-    features_ = np.c_[features_flatten]
+    if ndim_features == 1:
+        features_ = features_flatten[0]
+    elif ndim_features > 1:
+        # None: if some feature is str, then all features_ will be str
+        features_ = np.c_[features_flatten]
+        # preserve only items with non-zero element
+        # Note: zero element means NaN as element ids is not equal to 0
+        zero_ = 0 if np.issubdtype(features_.dtype, np.integer) else "0"
+        features_ = features_[np.all(features_ != zero_, axis=1)]
+        # for i in range(features_.shape[1]):
+        #     features_ = features_[features_[:,i]!=0]
 
-    # preserve only items with non-zero element
-    # Note: zero element means NaN as element ids is not equal to 0
-    features_ = features_[np.all(features_ != 0, axis=1)]
-    # for i in range(features_.shape[1]):
-    #     features_ = features_[features_[:,i]!=0]
-
+    num_elements = features_flatten[0].shape[0]
     elements, counts = np.unique(features_, axis=0, return_counts=True)
     if normalize:
-        counts = counts / features_flatten[0].shape[0]
+        counts = counts / num_elements
     hist = Histogram1D(data=None)
     for i in range(len(counts)):
-        item_tuple = tuple(map(str, elements[i].tolist()))
+        item_tuple = elements[i]
+        if ndim_features > 1:
+            item_tuple = tuple(map(str, elements[i].tolist()))
         hist[item_tuple] = HElement(item_tuple, counts[i])
     return hist
 
 
 def create_histogram_(merged_features, normalize=True):
     """
-    Slower than create_histogram
+    Slower than create_histogram?
     """
     features_ = merged_features.reshape(-1)
+    ndim_element = len(features_[0]) if isinstance(features_[0], np.record) else 1
 
-    # preserve only items with non-zero element
-    # Note: zero element means NaN as element ids is not equal to 0
-    for name in features_.dtype.names:
-        features_ = features_[features_[name]!=0]
+    if ndim_element > 1:
+        # preserve only items with non-zero element
+        # Note: zero element means NaN as element ids is not equal to 0
+        for name in features_.dtype.names:
+            # check type str or int to use appropriate zero
+            zero_ = 0 if np.issubdtype(features_[name].dtype, np.integer) else "0"
+            features_ = features_[features_[name] != zero_]
 
     elements, counts = np.unique(features_, axis=0, return_counts=True)
     if normalize:
         counts = counts / merged_features.size
     hist = Histogram1D(data=None)
     for i in range(len(counts)):
-        item_tuple = tuple(map(str, elements[i].tolist()))
+        item_tuple = elements[i]
+        if ndim_element > 1:
+            item_tuple = tuple(map(str, elements[i].tolist()))
         hist[item_tuple] = HElement(item_tuple, counts[i])
     return hist
 
 
 def merge_features(*features):
+    features_ = None
     shape = features[0].shape
+    ndim_features = len(features)
     features_flatten = tuple([item.reshape(-1) for item in features])
-    features_ = np.rec.fromarrays(features_flatten)
+    if ndim_features == 1:
+        features_ = np.rec.fromarrays(features_flatten[0])
+    elif ndim_features > 1:
+        features_ = np.rec.fromarrays(features_flatten)
     return features_.reshape(shape)
 
 
 def filter_data(data, features, elements):
 
-    def to_int(items):
-        return map(int, items)
+    # TODO: check?
+    # def to_int(items):
+    #     return map(int, items)
 
     features_ = features.reshape(-1)
     if len(data.shape) == len(features.shape) + 1:
@@ -229,9 +265,15 @@ def filter_data(data, features, elements):
     mask = np.full(data_flatten.shape, fill_value=255, dtype=np.int)
 
     # features_ = np.rec.fromarrays(features_flatten)
-    elements_ = np.array(
-        list(itertools.product(*(to_int(items) for items in elements))),
-        dtype=features_.dtype)
+    # elements_ = np.array(
+    #     list(itertools.product(*(to_int(items) for items in elements))),
+    #     dtype=features_.dtype)
+
+    # elements_ = np.array(
+    #     list(itertools.product(*(items for items in elements))),
+    #     dtype=features_.dtype)
+
+    elements_ = np.array(elements, dtype=features_.dtype)
 
     indx = np.in1d(features_, elements_)
     mask[indx] = data_flatten[indx]
@@ -240,6 +282,18 @@ def filter_data(data, features, elements):
 
 
 def extract_element_set(HE, none_dim=1):
+    """
+
+    Parameters
+    ----------
+    HE : HElementSet
+    none_dim : int
+        used to return empty dicts if no elements
+
+    Returns
+    -------
+
+    """
     elements = list(HE.to_dict().keys())
     if len(elements) == 0 and none_dim > 1:
         return [dict() for _ in range(none_dim)]
@@ -270,9 +324,13 @@ class FeatureMerger:
         if self._ndim != ndim:
             raise Exception("Mismatching dimensions.")
         if single:
+            features_ = None
             shape = X[0].shape
             features_flatten = tuple([item.reshape(-1) for item in X])
-            features_ = np.rec.fromarrays(features_flatten)
+            if ndim == 1:
+                features_ = features_flatten[0]
+            elif ndim > 1:
+                features_ = np.rec.fromarrays(features_flatten)
             return features_.reshape(shape)
         else:
             raise NotImplementedError
@@ -564,12 +622,16 @@ def plot_object_edges(object_transformer, ax, element_ids=None):
     return ax
 
 
-def show_operation_result(I, merged_image, E1_set, E2_set, E_result_set, transformers, titles=("E1", "E2", "Result")):
+def show_operation_result(I, merged_image, HE1, HE2, HE3, transformers, titles=("E1", "E2", "Result")):
     import matplotlib.pyplot as plt
 
-    E1_image = filter_data(I, merged_image, E1_set)
-    E2_image = filter_data(I, merged_image, E2_set)
-    RESULT_image = filter_data(I, merged_image, E_result_set)
+    E1_set = extract_element_set(HE1, 2)
+    E2_set = extract_element_set(HE2, 2)
+    E3_set = extract_element_set(HE3, 2)
+
+    E1_image = filter_data(I, merged_image, HE1.elements())
+    E2_image = filter_data(I, merged_image, HE2.elements())
+    E3_image = filter_data(I, merged_image, HE3.elements())
 
     fig, axes = plt.subplots(1, 3, figsize=(14, 20))
     axes[0].set_title(titles[0])
@@ -585,9 +647,9 @@ def show_operation_result(I, merged_image, E1_set, E2_set, E_result_set, transfo
     axes[1].get_xaxis().set_visible(False)
     axes[1].get_yaxis().set_visible(False)
     axes[2].set_title(titles[2])
-    axes[2].imshow(RESULT_image)
-    axes[2] = plot_position_grid(transformers[0], axes[2], E_result_set[0])
-    axes[2] = plot_object_edges(transformers[1], axes[2], E_result_set[1])
+    axes[2].imshow(E3_image)
+    axes[2] = plot_position_grid(transformers[0], axes[2], E3_set[0])
+    axes[2] = plot_object_edges(transformers[1], axes[2], E3_set[1])
     axes[2].get_xaxis().set_visible(False)
     axes[2].get_yaxis().set_visible(False)
 
@@ -627,6 +689,39 @@ def show_retrieved_images(ranked_images, image_paths, title=None, limit=11, cols
                 axs[i, j].axis("off")
     plt.tight_layout()
     plt.show()
+
+
+def convert_complete_histogram_values(U, H, to_sort=False):
+    """
+    Convert a sparse form of a histogram to a list of values of all elements.
+    Absent elements in the sparse form will be replaced by zero values.
+
+    Parameters
+    ----------
+    U - the universal set of elements
+    H - histogram of data or element
+    to_sort - whether it's needed to sort elements by names
+
+    Returns
+    -------
+    Values of all elements
+    """
+    hist_val_full = [0 for _ in U]
+
+    if isinstance(H, Histogram):
+        for i in range(len(U)):
+            if U[i] in H:
+                hist_val_full[i] = H[U[i]].value
+    elif isinstance(H, HElementSet):
+        elements = H.to_dict()
+        for i in range(len(U)):
+            if U[i] in elements:
+                hist_val_full[i] = elements[U[i]]
+
+    if to_sort:
+        hist_val_full.sort(reverse=False)
+
+    return hist_val_full
 
 
 if __name__ == "__main__":
