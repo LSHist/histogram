@@ -1,8 +1,8 @@
 import unittest
 
-from histogram.histogram import Histogram, HElementSet, operations
-from histogram.utils import E
-from histogram.executor import Parser, Evaluator, HistogramModel
+from himpy.histogram import Histogram, HElementSet, operations
+from himpy.utils import E
+from himpy.executor import Parser, Evaluator, HistogramModel
 
 
 class ParserTest(unittest.TestCase):
@@ -123,16 +123,16 @@ class Evaluator1DTest(unittest.TestCase):
         # Initialize Evaluator
         self.evaluator = Evaluator(operations, self.hist, high_level_elements=high_level_elements)
 
-    def test_HE_from_H__all_position_element(self):
-        HE = self.hist(("all", "e3"))
+    def test_HE_from_H__any_position_element(self):
+        HE = self.hist(("any", "e3"))
         self.assertIsInstance(HE, HElementSet)
         self.assertDictEqual({("ep2", "e3"): 0.2, ("ep3", "e3"): 0.2}, HE.to_dict())
         self.assertAlmostEqual(0.4, HE.sum(), 2)
 
-    def test_evaluate__all_position_element(self):
+    def test_evaluate__any_position_element(self):
         """Evaluation of expression with high level element and OR operation"""
 
-        E1 = E("all, e3")
+        E1 = E("any, e3")
 
         expression = self.parser.parse_string(E1.value)         # parse the expression
         HE_result = self.evaluator.eval(expression)             # evaluate the expression
