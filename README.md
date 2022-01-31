@@ -1,6 +1,6 @@
 
 
-# About himpy
+## About himpy
 
 `himpy` is a Python package that implements Histogram Model (or Logic-Set Histogram - `LSHist`)
 
