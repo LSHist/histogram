@@ -11,9 +11,10 @@
 - [Inverted Indexing in Histogram Model](https://htmlpreview.github.io/?https://github.com/LSHist/histogram/blob/master/docs/hm_indexing.html)
 
 ## Examples
-- Histogram Model: Color Feature ([jupyter](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/features/color_feature.ipynb) | [html](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/features/color_feature.html))
-- Histogram Model: Color and Position Features ([jupyter](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/features/color_position_features.ipynb) | [html](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/features/color_position_features.html))
-- Histogram Model: Image Objects ([jupyter](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/objects/image_objects.ipynb) | [html](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/objects/image_objects.html))
+- Histogram Model: Color Feature ([jupyter](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/features/image_color.ipynb) | [html](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/html/image_color.html))
+- Histogram Model: Color and Position Features ([jupyter](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/image_color_position.ipynb) | [html](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/html/image_color_position.html))
+- Histogram Model: Image Objects ([jupyter](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/image_object.ipynb) | [html](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/html/image_object.html))
+- Histogram Model: Image Objects with Depth ([jupyter](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/image_object_depth.ipynb) | [html](https://nbviewer.jupyter.org/github/LSHist/histogram/blob/master/examples/html/image_object_depth.html))
 
 ## Installation
 
